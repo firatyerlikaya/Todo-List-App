@@ -1,59 +1,84 @@
-# Yapılacaklar Listesi Uygulaması
+# Gelişmiş To-Do List Uygulaması (Python & Tkinter)
 
-Bu, Python ve `tkinter` (Tkinter-bootstrap temalarıyla) kullanılarak geliştirilmiş basit bir yapılacaklar listesi uygulamasıdır. Kullanıcıların görevleri yönetmesine, alt görevler eklemesine, öncelik belirlemesine, son tarihler eklemesine, notlar almasına ve farklı görev listeleri oluşturmasına olanak tanır.
+Bu proje, Python'un `tkinter` ve `ttkbootstrap` kütüphaneleri kullanılarak geliştirilmiş, modern ve zengin özelliklere sahip bir masaüstü yapılacaklar listesi uygulamasıdır. Kullanıcıların görevlerini listeler halinde organize etmelerine, alt görevler oluşturmalarına ve görevlerini etkin bir şekilde yönetmelerine olanak tanır.
 
-## Özellikler
 
--   **Görev Yönetimi:** Görev ekleme, silme, tamamlama ve tamamlanmamış olarak işaretleme.
--   **Alt Görevler:** Ana görevlere alt görevler ekleyebilme özelliği.
--   **Görev Detayları:** Her göreve öncelik (Yüksek, Normal, Düşük), son tarih ve notlar ekleyebilme.
--   **Çoklu Görev Listeleri:** Farklı kategorilerde veya projeler için ayrı görev listeleri oluşturma ve yönetme.
--   **Sıralama Seçenekleri:** Görevleri eklenme sırasına, son tarihe, önceliğe veya isme göre sıralama.
--   **Tema Seçimi:** Açık ve koyu tema arasında geçiş yapabilme.
--   **Kalıcılık:** Uygulama kapatıldığında görevlerin `tasks.json` dosyasına kaydedilmesi ve tekrar açıldığında yüklenmesi.
 
-## Kurulum ve Çalıştırma
+## 🚀 Özellikler
 
-Bu uygulamayı çalıştırmak için sisteminizde Python 3 yüklü olmalıdır.
+- **Modern ve Duyarlı Arayüz:** `ttkbootstrap` kullanılarak oluşturulmuş şık ve temiz bir kullanıcı arayüzü.
+- **Açık ve Koyu Tema Desteği:** Kullanıcılar, tek bir tıkla aydınlık (`litera`) ve karanlık (`darkly`) temalar arasında geçiş yapabilir.
+- **Çoklu Liste Yönetimi:** Farklı projeler veya kategoriler için birden çok yapılacaklar listesi oluşturma, silme ve bunlar arasında geçiş yapma.
+- **Hiyerarşik Görev Yapısı (Alt Görevler):** Karmaşık görevleri daha küçük, yönetilebilir alt görevlere bölme imkanı.
+- **Görev Detayları:**
+  - **Öncelik Atama:** Görevlere "Yüksek", "Normal", "Düşük" gibi öncelik seviyeleri belirleme.
+  - **Son Tarih (Due Date):** Her göreve bir bitiş tarihi ekleme.
+  - **Not Ekleme:** Görevlerle ilgili detaylı notlar veya açıklamalar için çok satırlı metin alanı.
+- **Toplu İşlemler:** `Ctrl` tuşu ile birden fazla görev seçerek toplu olarak silme veya tamamlama.
+- **Veri Kalıcılığı:** Tüm görevler ve listeler, uygulama kapatıldığında `tasks.json` dosyasına kaydedilir ve yeniden açıldığında geri yüklenir.
+- **Geriye Dönük Uyumluluk:** Uygulamanın eski versiyonlarından kalan görev verilerini otomatik olarak yeni formata dönüştürür.
 
-1.  **Depoyu Klonlayın:**
-    ```bash
-    git clone https://github.com/firatyerlikaya/Todo-List-App.git
-    cd Todo-List-App
-    ```
+## 🛠️ Kullanılan Teknolojiler
 
-2.  **Gerekli Kütüphaneleri Yükleyin:**
-    ```bash
-    pip install ttkbootstrap
-    ```
+- **Python 3.x**
+- **Tkinter:** Python'un standart GUI (Grafiksel Kullanıcı Arayüzü) kütüphanesi.
+- **ttkbootstrap:** `tkinter` için modern temalar ve widget'lar sağlayan harici bir kütüphane.
 
-3.  **Uygulamayı Çalıştırın:**
-    ```bash
-    python todo_app.py
-    ```
+## ⚙️ Kurulum ve Çalıştırma
 
-## Kullanım
+Bu projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları izleyin. Projenin bağımlılıklarını sisteminizden izole etmek için bir **sanal ortam (virtual environment)** kullanılması şiddetle tavsiye edilir.
 
--   **Yeni Görev Ekleme:** "Görev Metni" kutusuna görevinizi yazın, önceliği ve son tarihi seçin, ardından "Görev Ekle" butonuna tıklayın.
--   **Alt Görev Ekleme:** Bir ana görevi seçin ve "Alt Görev Ekle" butonuna tıklayın.
--   **Görevi Düzenleme:** Göreve çift tıklayarak metnini, son tarihini ve notlarını düzenleyebilirsiniz.
--   **Görevi Tamamlama/Tamamlanmadı Olarak İşaretleme:** Bir veya daha fazla görevi seçin ve ilgili "Tamamlandı" veya "Tamamlanmadı" butonlarına tıklayın.
--   **Yeni Liste Oluşturma:** "Yeni Liste" butonuna tıklayarak yeni bir görev listesi oluşturun.
--   **Listeler Arasında Geçiş:** "Aktif Liste" açılır menüsünden farklı görev listeleri arasında geçiş yapın.
--   **Sıralama:** "Sırala" açılır menüsünden görevleri istediğiniz kritere göre sıralayın.
--   **Tamamlananları Temizle:** Mevcut listedeki tüm tamamlanmış görevleri siler.
--   **Tümünü Sil:** Mevcut listedeki tüm görevleri siler.
+### 1. Projeyi Klonlama veya İndirme
 
-## Katkıda Bulunma
+Öncelikle, bu depoyu bilgisayarınıza klonlayın veya ZIP olarak indirin.
+```bash
+git clone https://github.com/firatyerlikaya/Todo-List-App.git
+cd Todo-List-App
+```
 
-Geliştirmeye katkıda bulunmaktan çekinmeyin! Her türlü öneri veya hata bildirimi kabul edilir.
+### 2. Sanal Ortam Oluşturma ve Aktif Etme
 
-1.  Bu depoyu (repository) fork edin.
-2.  Yeni bir dal (branch) oluşturun: `git checkout -b feature/your-feature-name`
-3.  Değişikliklerinizi yapın ve commit edin: `git commit -m 'Add some feature'`
-4.  Dalı push edin: `git push origin feature/your-feature-name`
-5.  Bir Pull Request oluşturun.
+Proje klasörünün içindeyken bir sanal ortam oluşturun.
 
-## Lisans
+```bash
+# Sanal ortamı "venv" adıyla oluştur
+python -m venv venv
+```
 
-Bu proje eğitim amaçlıdır. İhtiyacınıza göre kullanıp değiştirebilirsiniz.
+Ardından, oluşturduğunuz sanal ortamı işletim sisteminize göre aktif hale getirin.
+
+- **Windows için:**
+  ```powershell
+  .\venv\Scripts\activate
+  ```
+
+- **macOS / Linux için:**
+  ```bash
+  source venv/bin/activate
+  ```
+
+Komut satırınızın başında `(venv)` ibaresini gördüğünüzde sanal ortam aktif demektir.
+
+### 3. Bağımlılıkları Yükleme
+
+Projenin çalışması için gereken tüm kütüphaneler `requirements.txt` dosyasında listelenmiştir. Bu kütüphaneleri sanal ortama kurmak için aşağıdaki komutu çalıştırın:
+
+```bash
+pip install ttkbootstrap
+```
+
+### 4. Uygulamayı Başlatma
+
+Tüm kurulumlar tamamlandıktan sonra, uygulamayı aşağıdaki komutla başlatabilirsiniz:
+
+```bash
+python todo_app.py
+```
+
+### 5. Sanal Ortamı Kapatma (Deaktif Etme)
+
+Uygulama ile işiniz bittiğinde, sanal ortamdan çıkmak için komut satırına aşağıdaki komutu yazmanız yeterlidir:
+
+```bash
+deactivate
+```
