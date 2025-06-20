@@ -61,7 +61,7 @@ Komut satırınızın başında `(venv)` ibaresini gördüğünüzde sanal ortam
 
 ### 3. Bağımlılıkları Yükleme
 
-Projenin çalışması için gereken tüm kütüphaneler `requirements.txt` dosyasında listelenmiştir. Bu kütüphaneleri sanal ortama kurmak için aşağıdaki komutu çalıştırın:
+Projenin çalışması için gerekli ttkbootstrap kütüphanesini indirin.
 
 ```bash
 pip install ttkbootstrap
