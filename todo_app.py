@@ -7,30 +7,59 @@ from ttkbootstrap.scrolled import ScrolledText
 import json
 import os
 
+# Uygulama genelinde kullanılacak sabitler
 TASKS_FILE = "tasks.json"
 
 class TodoListApp:
+    """
+    Çoklu liste, alt görevler, öncelikler, son tarihler, notlar ve temalar gibi
+    gelişmiş özelliklere sahip bir masaüstü yapılacaklar listesi uygulaması.
+    """
     def __init__(self, root):
+        """
+        Uygulamanın ana sınıfının kurucu metodu.
+        Tüm arayüz elemanlarını (widget) oluşturur ve başlangıç ayarlarını yapar.
+        
+        Args:
+            root (ttk.Window): Uygulamanın ana penceresi.
+        """
         self.root = root
         self.root.title("Yapılacaklar Listesi")
         self.root.geometry("1100x650")
 
+        # Uygulama genelinde kullanılacak sabit listeler
         self.priorities = ["Yüksek", "Normal", "Düşük"]
         self.sort_options = [
             "Eklenme Sırası", "Son Tarihe Göre (Yakın)", "Son Tarihe Göre (Uzak)",
             "Önceliğe Göre (Yüksekten Düşüğe)", "İsme Göre (A-Z)"
         ]
         
-        self.tasks = {}
-        self.current_list_name = None
-        self.iid_map = {}
+        # Proje durumu için ana değişkenler
+        self.tasks = {}  # Tüm listeleri ve görevleri tutan ana sözlük: {"Liste Adı": [görev_sözlüğü, ...]}
+        self.current_list_name = None  # Aktif olarak görüntülenen listenin adı
+        self.iid_map = {}  # Treeview iid'lerini görev objelerine (sözlüklerine) eşleyen harita
 
+        # Arayüzü oluştur
+        self.create_widgets()
+        
+        # Kayıtlı görevleri dosyadan yükle
+        self.load_tasks()
+        
+        # Uygulama açıldığında varsayılan temayı ayarla ve buton stilini güncelle
+        self.change_theme('litera')
+        
+        # Pencere kapatma butonuna basıldığında on_closing fonksiyonunu çalıştır
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def create_widgets(self):
+        """Tüm arayüz elemanlarını (widget) oluşturur ve ekrana yerleştirir."""
         main_frame = ttk.Frame(self.root, padding=(10, 10))
         main_frame.pack(fill=BOTH, expand=True)
 
         header_label = ttk.Label(main_frame, text="Yapılacaklar Listesi", font=("Helvetica", 18, "bold"), bootstyle=PRIMARY)
         header_label.pack(pady=(0, 10))
 
+        # Üst kontrol paneli (Liste Seçimi, Sıralama, Tema)
         control_frame = ttk.Frame(main_frame)
         control_frame.pack(fill=X, pady=(0, 10))
         control_frame.grid_columnconfigure(1, weight=1)
@@ -39,30 +68,26 @@ class TodoListApp:
         self.list_combobox = ttk.Combobox(control_frame, state="readonly", width=20)
         self.list_combobox.grid(row=0, column=1, sticky='ew')
         self.list_combobox.bind("<<ComboboxSelected>>", self.on_list_selected)
-
-        ttk.Label(control_frame, text="Sırala:").grid(row=1, column=0, padx=(0, 5), pady=(5,0), sticky='w')
-        self.sort_combobox = ttk.Combobox(control_frame, state="readonly", values=self.sort_options, width=25)
-        self.sort_combobox.grid(row=1, column=1, pady=(5,0), sticky='ew')
-        self.sort_combobox.set("Eklenme Sırası")
-        self.sort_combobox.bind("<<ComboboxSelected>>", self.populate_treeview)
         
-        # --- GÜNCELLEME: Butonların grid pozisyonları yeniden düzenlendi ---
         add_list_btn = ttk.Button(control_frame, text="Yeni Liste", command=self.add_new_list, bootstyle=(INFO, OUTLINE))
         add_list_btn.grid(row=0, column=2, padx=(10, 5), sticky='nsew')
-        
         delete_list_btn = ttk.Button(control_frame, text="Listeyi Sil", command=self.delete_current_list, bootstyle=(DANGER, OUTLINE))
         delete_list_btn.grid(row=0, column=3, sticky='nsew')
         
         self.light_theme_btn = ttk.Button(control_frame, text="☀️", command=lambda: self.change_theme('litera'), bootstyle=PRIMARY, width=3)
         self.light_theme_btn.grid(row=1, column=2, padx=(10, 5), pady=(5,0), sticky="nsew")
-
         self.dark_theme_btn = ttk.Button(control_frame, text="🌙", command=lambda: self.change_theme('darkly'), bootstyle=OUTLINE, width=3)
         self.dark_theme_btn.grid(row=1, column=3, pady=(5,0), sticky="nsew")
+        
+        ttk.Label(control_frame, text="Sırala:").grid(row=1, column=0, padx=(0, 5), pady=(5,0), sticky='w')
+        self.sort_combobox = ttk.Combobox(control_frame, state="readonly", values=self.sort_options, width=25)
+        self.sort_combobox.grid(row=1, column=1, pady=(5,0), sticky='ew')
+        self.sort_combobox.set("Eklenme Sırası")
+        self.sort_combobox.bind("<<ComboboxSelected>>", self.populate_treeview)
 
-
+        # Görevlerin hiyerarşik olarak gösterildiği ana ağaç yapısı
         tree_frame = ttk.Frame(main_frame)
         tree_frame.pack(fill=BOTH, expand=True, pady=5)
-        
         columns = ('due_date', 'priority')
         self.tree = ttk.Treeview(tree_frame, columns=columns, show="tree headings")
         self.tree.heading('#0', text='Görev Adı'); self.tree.heading('due_date', text='Son Tarih'); self.tree.heading('priority', text='Öncelik')
@@ -74,12 +99,12 @@ class TodoListApp:
         scrollbar.pack(side=RIGHT, fill=Y)
         self.tree.config(yscrollcommand=scrollbar.set)
         
+        # Görev ekleme alanı (metin, öncelik, tarih)
         entry_frame = ttk.Frame(main_frame)
         entry_frame.pack(fill=X, pady=10)
         self.task_entry = ttk.Entry(entry_frame, font=("Helvetica", 12))
         self.task_entry.pack(side=LEFT, fill=X, expand=True)
         self.task_entry.bind("<Return>", lambda e: self.add_task(is_subtask=False))
-        
         options_frame = ttk.Frame(entry_frame)
         options_frame.pack(side=RIGHT, padx=(10, 0))
         priority_label = ttk.Label(options_frame, text="Öncelik:")
@@ -93,6 +118,7 @@ class TodoListApp:
         self.date_entry = ttk.DateEntry(options_frame, dateformat="%Y-%m-%d", firstweekday=1)
         self.date_entry.pack(side=LEFT)
 
+        # Ana işlem butonları (Ekle, Sil, Tamamla vb.)
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill=X, pady=(5, 0))
         add_btn = ttk.Button(button_frame, text="Görev Ekle", command=lambda: self.add_task(is_subtask=False), bootstyle=SUCCESS)
@@ -109,12 +135,9 @@ class TodoListApp:
         clear_btn.pack(side=LEFT, expand=True, fill=X, padx=2)
         delete_all_btn = ttk.Button(button_frame, text="Tümünü Sil", command=self.delete_all_tasks, bootstyle=(DANGER, OUTLINE))
         delete_all_btn.pack(side=LEFT, expand=True, fill=X, padx=2)
-        
-        self.load_tasks()
-        self.change_theme('litera')
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def change_theme(self, theme_name):
+        """Uygulamanın temasını 'litera' veya 'darkly' olarak değiştirir."""
         self.root.style.theme_use(theme_name)
         if theme_name == 'litera':
             self.light_theme_btn.config(bootstyle=PRIMARY)
@@ -125,6 +148,10 @@ class TodoListApp:
         self.populate_treeview()
         
     def load_tasks(self):
+        """
+        tasks.json dosyasından görevleri yükler.
+        Eski formatları destekler ve eksik anahtarları tamamlar.
+        """
         def complete_task_data(task_list):
             for task in task_list:
                 task.setdefault("priority", "Normal"); task.setdefault("due_date", None)
@@ -143,10 +170,12 @@ class TodoListApp:
         self.update_list_combobox()
 
     def save_tasks(self):
+        """Mevcut görevleri ve listeleri tasks.json dosyasına kaydeder."""
         with open(TASKS_FILE, "w", encoding="utf-8") as f:
             json.dump(self.tasks, f, ensure_ascii=False, indent=4)
 
     def update_list_combobox(self):
+        """Aktif liste seçme kutusunu (Combobox) günceller."""
         list_names = list(self.tasks.keys())
         self.list_combobox["values"] = list_names
         if list_names:
@@ -157,15 +186,21 @@ class TodoListApp:
             self.list_combobox.set(""); self.current_list_name = None; self.populate_treeview()
     
     def on_list_selected(self, event=None):
+        """Combobox'tan yeni bir liste seçildiğinde tetiklenir."""
         self.current_list_name = self.list_combobox.get()
         self.sort_combobox.set("Eklenme Sırası")
         self.populate_treeview()
     
     def populate_treeview(self, event=None):
+        """
+        Aktif görev listesindeki verileri Treeview'e hiyerarşik olarak yerleştirir.
+        Seçilen kritere göre sıralama ve renklendirme işlemleri burada yapılır.
+        """
         for i in self.tree.get_children(): self.tree.delete(i)
         self.iid_map.clear()
         if not self.current_list_name or self.current_list_name not in self.tasks: return
         task_list = self.tasks[self.current_list_name]
+        
         def sort_recursively(tasks):
             sort_by = self.sort_combobox.get()
             if sort_by == "Eklenme Sırası": pass
@@ -176,15 +211,16 @@ class TodoListApp:
                     if sort_by == "İsme Göre (A-Z)": return task['text'].lower()
                     if sort_by.startswith("Önceliğe"): return priority_map.get(task['priority'], 99)
                     if sort_by.startswith("Son Tarihe"):
-                        has_date = task['due_date'] is not None
-                        if not has_date: return (1, None)
+                        if not task['due_date']: return (1, None)
                         return (0, datetime.strptime(task['due_date'], "%Y-%m-%d"))
                     return None
                 tasks.sort(key=get_sort_key, reverse=reverse_order)
             for task in tasks:
                 if task.get("subtasks"): sort_recursively(task["subtasks"])
             return tasks
+        
         sorted_task_list = sort_recursively(list(task_list))
+        
         def _insert_items(parent_node, tasks):
             for i, task in enumerate(tasks):
                 task_id = f"{parent_node}-{id(task)}"; self.iid_map[task_id] = task
@@ -194,14 +230,17 @@ class TodoListApp:
                 item = self.tree.insert(parent_node, END, iid=task_id, text=task_display_text, values=(task.get('due_date', ''), task.get('priority', '')), tags=tags, open=True)
                 if task.get("subtasks"): _insert_items(item, task["subtasks"])
         _insert_items('', sorted_task_list)
+        
         style = ttk.Style.get_instance()
         colors = style.colors
         self.tree.tag_configure('completed', foreground=colors.secondary)
 
     def on_tree_select(self, event):
+        """Treeview'de bir öğe seçildiğinde 'Alt Görev Ekle' butonunu aktif/pasif yapar."""
         self.add_subtask_btn.config(state=NORMAL if self.tree.selection() else DISABLED)
 
     def add_task(self, is_subtask=False):
+        """Yeni bir görev (veya alt görev) oluşturur ve listeye ekler."""
         if not self.current_list_name:
             messagebox.showwarning("Uyarı", "Lütfen önce bir görev listesi seçin veya oluşturun."); return
         task_text = self.task_entry.get()
@@ -218,6 +257,7 @@ class TodoListApp:
         self.populate_treeview(); self.task_entry.delete(0, tk.END); self.date_entry.entry.delete(0, tk.END)
     
     def find_task_and_parent_list(self, task_to_find):
+        """Verilen bir görev objesini ve ait olduğu listeyi (ebeveynini) bulur."""
         if not task_to_find: return None, None
         def _search(current_list):
             for task in current_list:
@@ -228,17 +268,20 @@ class TodoListApp:
         return task_to_find, _search(self.tasks.get(self.current_list_name, []))
 
     def delete_task(self):
+        """Seçili olan görev(ler)i ve tüm alt görevlerini siler."""
         selected_iids = self.tree.selection()
         if not selected_iids: return
         is_sure = messagebox.askyesno("Onay", f"{len(selected_iids)} adet görevi (ve tüm alt görevlerini) silmek istediğinizden emin misiniz?")
         if is_sure:
             for iid in selected_iids:
                 task_to_delete = self.iid_map.get(iid)
-                task, parent_list = self.find_task_and_parent_list(task_to_delete)
-                if task and parent_list is not None: parent_list.remove(task)
+                _, parent_list = self.find_task_and_parent_list(task_to_delete)
+                if task_to_delete and parent_list is not None:
+                    parent_list.remove(task_to_delete)
             self.populate_treeview()
 
     def mark_as_complete(self):
+        """Seçili görev(ler)i tamamlandı olarak işaretler."""
         selected_iids = self.tree.selection()
         if not selected_iids: return
         for iid in selected_iids:
@@ -247,6 +290,7 @@ class TodoListApp:
         self.populate_treeview()
     
     def mark_as_incomplete(self):
+        """Seçili görev(ler)in tamamlandı işaretini kaldırır."""
         selected_iids = self.tree.selection()
         if not selected_iids: return
         for iid in selected_iids:
@@ -255,6 +299,7 @@ class TodoListApp:
         self.populate_treeview()
 
     def clear_completed_tasks(self):
+        """Aktif listedeki tüm tamamlanmış görevleri (alt görevler dahil) temizler."""
         if not self.current_list_name: return
         is_sure = messagebox.askyesno("Onay", f"'{self.current_list_name}' listesindeki tüm biten görevleri temizlemek istediğinizden emin misiniz?")
         if not is_sure: return
@@ -267,12 +312,14 @@ class TodoListApp:
         self.populate_treeview()
         
     def delete_all_tasks(self):
+        """Aktif listedeki TÜM görevleri siler."""
         if not self.current_list_name or not self.tasks[self.current_list_name]: return
         is_sure = messagebox.askyesno("DİKKAT", f"'{self.current_list_name}' listesindeki TÜM görevleri kalıcı olarak silmek istediğinizden emin misiniz?", icon='warning')
         if is_sure:
             self.tasks[self.current_list_name].clear(); self.populate_treeview()
 
     def edit_task(self, event):
+        """Seçili bir göreve çift tıklandığında düzenleme penceresini açar."""
         selected_iid = self.tree.focus()
         if not selected_iid: return
         task_info = self.iid_map.get(selected_iid)
@@ -300,6 +347,7 @@ class TodoListApp:
         self.edit_win.transient(self.root); self.edit_win.grab_set(); self.root.wait_window(self.edit_win)
 
     def update_task(self, task_to_update, new_text, new_date, new_notes):
+        """Düzenleme penceresindeki değişiklikleri kaydeder."""
         new_text = new_text.strip()
         if new_date:
             try: datetime.strptime(new_date, "%Y-%m-%d")
@@ -314,9 +362,11 @@ class TodoListApp:
             messagebox.showwarning("Uyarı", "Görev metni boş olamaz.", parent=self.edit_win)
     
     def on_closing(self):
+        """Uygulama kapatılırken görevleri kaydeder."""
         self.save_tasks(); self.root.destroy()
 
     def add_new_list(self):
+        """Yeni bir görev listesi oluşturmak için diyalog penceresi açar."""
         dialog = ttk.Toplevel(title="Yeni Liste Oluştur")
         dialog_frame = ttk.Frame(dialog, padding=10)
         dialog_frame.pack(fill=BOTH, expand=True)
@@ -336,6 +386,7 @@ class TodoListApp:
         dialog.transient(self.root); dialog.grab_set(); dialog.resizable(False, False); self.root.wait_window(dialog)
 
     def delete_current_list(self):
+        """Aktif listeyi ve içindeki tüm görevleri siler."""
         if not self.current_list_name:
             messagebox.showerror("Hata", "Silinecek bir liste seçili değil."); return
         if len(self.tasks) <= 1:
@@ -344,7 +395,10 @@ class TodoListApp:
         if is_sure:
             del self.tasks[self.current_list_name]; self.current_list_name = None; self.update_list_combobox()
 
+# Ana uygulama döngüsü
 if __name__ == "__main__":
+    # Ana pencereyi ttkbootstrap Window olarak oluştur ve başlangıç temasını belirle
     root = ttk.Window(themename="litera")
     app = TodoListApp(root)
+    # Tkinter olay döngüsünü başlatarak uygulamanın çalışmasını sağla
     root.mainloop()
