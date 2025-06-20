@@ -1,4 +1,4 @@
-# Gelişmiş To-Do List Uygulaması (Python & Tkinter)
+# To-Do List Uygulaması (Python & Tkinter)
 
 Bu proje, Python'un `tkinter` ve `ttkbootstrap` kütüphaneleri kullanılarak geliştirilmiş, modern ve zengin özelliklere sahip bir masaüstü yapılacaklar listesi uygulamasıdır. Kullanıcıların görevlerini listeler halinde organize etmelerine, alt görevler oluşturmalarına ve görevlerini etkin bir şekilde yönetmelerine olanak tanır.
 
